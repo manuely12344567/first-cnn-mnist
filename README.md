@@ -18,21 +18,7 @@ It is designed to be simple, readable, and educational — perfect for beginners
 
 ---
 
-## 🗂️ Project Structure
 
-```
-First-CNN-MNIST/
-├── model/
-│   └── cnn_mnist.py        # Model definition and training
-├── utils/
-│   └── visualize.py        # Visualization utilities
-├── notebooks/
-│   └── exploration.ipynb   # Jupyter notebook for exploration
-├── requirements.txt
-└── README.md
-```
-
----
 
 ## 🧱 Model Architecture
 
@@ -65,7 +51,7 @@ Dense(10, Softmax)          → Predicts digit (0 to 9)
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/First-CNN-MNIST.git
+git clone git clone https://github.com/manuely12344567/first-cnn-mnist
 cd First-CNN-MNIST
 ```
 
