@@ -1,0 +1,99 @@
+import tensorflow as tf
+from tensorflow import keras 
+import numpy as np
+
+# telechargement des données d'entrainement qui sont divisés en deux groupe
+(X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
+
+# analyse des données telechargés
+print("Forme X_train :", X_train.shape)
+print("Forme X_test  :", X_test.shape)
+print("Valeur min :", X_train.min())
+print("Valeur max :", X_train.max())
+
+# conversion des valeurs des pixels en valeur comprise entre [0,1]
+X_train = X_train / X_train.max()
+X_test  = X_test / X_train.max()
+
+# construction du model CNN
+model = keras.Sequential([ 
+    
+    # Nos images sont en (28, 28) — 2 dimensions. Mais Conv2D a besoin de 3 dimensions : hauteur, largeur, et canaux de couleur. On ajoute 1 car nos images sont en noir et blanc (1 canal). Une image couleur aurait 3 canaux (Rouge, Vert, Bleu).
+    keras.layers.Reshape((28, 28, 1), input_shape=(28, 28)),
+    
+    # 32 → nombre de filtres (le réseau cherche 32 caractéristiques différentes)
+    #(3,3) → chaque filtre regarde une zone de 3×3 pixels à la fois
+    #relu → garde uniquement les valeurs positives
+    keras.layers.Conv2D(32, (3,3), activation='relu'),
+    
+    #Réduit l'image de moitié en gardant uniquement la valeur la plus forte dans chaque zone de 2×2 pixels. Résultat → image plus petite, calculs plus rapides, réseau plus robuste.
+    keras.layers.MaxPooling2D(2,2),
+    
+    # Transforme la  grille 2D en une liste 1D — exactement comme notre MLP ! C'est la transition entre la partie visuelle et la partie classification.
+    keras.layers.Flatten(),
+    
+    # Une couche de 128 neurones classiques — comme dans notre MLP ! Elle analyse les caractéristiques détectées par Conv2D pour comprendre quel chiffre c'est.
+    keras.layers.Dense(128, activation='relu'),
+   
+    # La couche de **sortie finale** — 10 neurones pour 10 chiffres. Softmax transforme les résultats en probabilités. Le chiffre avec la probabilité la plus haute est la prédiction.
+    keras.layers.Dense(10, activation ='softmax')
+])
+
+model.compile(
+    optimizer= 'adam' ,
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy']
+)
+
+model.fit(
+    X_train, y_train,
+    epochs= 5,
+    validation_data=(X_test, y_test)
+)
+
+#alalyse du modele après entrainement
+model.summary()
+
+# evaluation du models avec des donnée test
+model.evaluate(X_test, y_test)
+
+# utilisation de matplotlib pour la visualisatio des images
+import matplotlib.pyplot as plt
+
+index = 885
+plt.imshow(X_test[index], cmap='gray')
+plt.title(f"Vraie réponse : {y_test[index]}")
+plt.show()
+
+prediction = model.predict(X_test[index:index+1])
+print("Prédiction du modèle :", prediction.argmax())
+
+# enregistrement du modele
+model.save('mon_premier_modele.keras')
+
+#########################################################################################################
+
+# chargement du modele
+llm = keras.models.load_model('mon_premier_modele.keras')
+
+# utilisation du modele sur de nouvele image avec verification de precision
+erreurs = []
+for i in range(1000):
+    prediction = llm.predict(X_test[i:i+1], verbose=0)
+    if prediction.argmax() != y_test[i]:
+        erreurs.append((i, y_test[i], prediction.argmax()))
+
+print(f"Erreurs trouvées : {len(erreurs)} sur 1000 images")
+for i, vrai, predit in erreurs[:5]:
+    print(f"Image {i} | Vrai : {vrai} | Prédit : {predit}")
+
+# analyse des image afin de trouver la cause des erreur de prediction
+ig, axes = plt.subplots(1, 5, figsize=(15, 3))
+
+for idx, (i, vrai, predit) in enumerate(erreurs[:5]):
+    axes[idx].imshow(X_test[i], cmap='gray')
+    axes[idx].set_title(f"Vrai : {vrai}\nPrédit : {predit}", color='red')
+    axes[idx].axis('off')
+
+plt.suptitle("Les 5 premières erreurs du modèle")
+plt.show()
